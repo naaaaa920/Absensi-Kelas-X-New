@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Aplikasi Absensi Kelas X — Bulanan (H/S/I/A)</title>
+<style>
+  :root{
+    --bg1:#f0f8ff;
+    --card:#ffffff;
+    --accent:#4f46e5;
+    --muted:#6b7280;
+    --success:#10b981;
+    --danger:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg, var(--bg1), #eef2ff 60%);
+    color:#111827;
+    padding:18px;
+  }
+  .wrap{max-width:1200px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#60a5fa,#7c3aed);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px}
+  h1{font-size:20px;margin:0}
+  p.lead{margin:0;color:var(--muted);font-size:13px}
+  /* Login */
+  #loginBox{width:360px;margin:60px auto;background:var(--card);padding:20px;border-radius:12px;box-shadow:0 6px 30px rgba(16,24,40,0.08)}
+  #loginBox h2{margin:0 0 8px}
+  .field{margin-top:10px}
+  input[type=text], input[type=password], select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+  button.btn{background:var(--accent);color:white;padding:10px 12px;border-radius:8px;border:none;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #e6e9ef;color:var(--muted)}
+  /* App */
+  #appHeader{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .controls{display:flex;gap:8px;align-items:center}
+  .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+  .tableWrap{overflow:auto;border-radius:12px;margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th, td{padding:6px;border:1px solid #eef2ff;text-align:center;vertical-align:middle}
+  thead th{background:linear-gradient(90deg,#eef2ff,#f8faff);font-weight:600;color:#111827;position:sticky;top:0;z-index:2}
+  .dayHeader{background:#f8fafc;font-size:12px;padding:4px 6px}
+  select.daily{padding:4px;border-radius:6px;border:1px solid #e6e9ef;background:white}
+  td.name{ text-align:left;padding-left:10px;font-weight:600}
+  td.tot{background:#fcfdfd;font-weight:700}
+  .small{font-size:12px;color:var(--muted)}
+  .rightActions{display:flex;gap:8px;align-items:center}
+  .controls .btn{padding:8px 10px}
+  .footer{margin-top:12px;color:var(--muted);font-size:13px}
+  @media(max-width:900px){
+    #loginBox{width:92%; margin-top:20px}
+    .brand h1{font-size:18px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="logo">KX</div>
+    <div>
+      <h1>Aplikasi Absensi — Kelas X</h1>
+      <p class="lead">Rekap bulanan otomatis (Hadir / Sakit / Izin / Alfa) · Simpan otomatis di browser</p>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="loginBox" class="card">
+    <h2>Login Guru</h2>
+    <div class="small">Masukkan kredensial untuk mengakses aplikasi</div>
+    <div class="field"><input id="username" type="text" placeholder="Username"></div>
+    <div class="field"><input id="password" type="password" placeholder="Password"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" onclick="doLogin()">Masuk</button>
+      <button class="ghost" onclick="fillDemo()">Isi demo</button>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">Default: <strong>admin</strong> / <strong>123</strong></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" style="display:none">
+    <div id="appHeader">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div>
+          <label class="small">Pilih Bulan</label><br>
+          <select id="monthSel"></select>
+        </div>
+        <div>
+          <label class="small">Pilih Tahun</label><br>
+          <select id="yearSel"></select>
+        </div>
+        <div>
+          <label class="small">Filter nama</label><br>
+          <input id="filterName" type="text" placeholder="Cari nama..." style="padding:8px;border-radius:8px;border:1px solid #e6e9ef">
+        </div>
+      </div>
+
+      <div class="rightActions">
+        <div class="small" id="savedStatus">Terakhir disimpan: -</div>
+        <button class="btn" onclick="saveAll()">Simpan</button>
+        <button class="btn" onclick="exportCSV()">Export CSV</button>
+        <button class="ghost" onclick="resetMonth()">Reset Bulan</button>
+        <button class="ghost" onclick="resetAll()">Reset Semua</button>
+        <button class="ghost" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="small">Kolom setiap hari: pilih H (Hadir) / S (Sakit) / I (Izin) / A (Alfa). Rekap otomatis di kanan.</div>
+      <div class="tableWrap" id="tableWrap" style="margin-top:8px">
+        <!-- Table akan di-generate JS -->
+      </div>
+    </div>
+
+    <div class="footer">Data disimpan otomatis di browser (localStorage). Gunakan Export CSV untuk mengambil data.</div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------
+  Data & Siswa (user-provided)
+----------------------------*/
+const NAMES = [
+"AHZAHRA ECHA ARDINI","AINUL HUSNA","AISYAH BILQIS AZZAHRA","AQILLA RAHMADANY",
+"ASKIA ZAHRA JULIANIS","AULIA AYU DESFIANTI","AZKYA SALSABILLA PUTRI",
+"BALQIS ATHIFAH NASYWAH ASYAWI","BANU TRI WICAKSONO","CHELSEA AULIA",
+"CLARA IVANA SIREGAR","FAARIS TIKO NOORSETYO","FATIMAH IZZATUNNISSA",
+"FAUZIYYAH AYU FITRIANI","FAYA ARDILA JUNIKA SARI","GATHAN ARAFAT AL FAIRUZ",
+"GRACE DENATALIE DEWI","HAIDAR ATHALLAH SAFRUDIN","IBRAHIMMOVIC AL KAUTSAR",
+"INDRA SETIAWAN","JASEN IMANUEL ISKANDAR","JUANITA ISNAINNUR KHAIRANI",
+"KHESYA GUNA APRILIA","KYLA DWI SAPUTRI","LILIN PUTRI PRAMESWARI",
+"LINTANG ARUMI","MUTIARA NOVATINI","NABILA NUR SAFITRI","NAGITA AGUSTIANI",
+"NASSYFA MAHARANI","NAUVIL MA'RUFAH","NAYCHILA ARDITA","NAYLA SYAFIRA NURAISYAH",
+"NAZWA RAHMALIA","NIAR RACHMA ARYANI","NURHASANAH AISYAH PUTRI PASARIBU",
+"RAYHAN EZAR PAHLEVI","RAYHAN RYSZARD BAYANAKA","REZKY ABDI PRATAMA",
+"RIFAYA AZKANIA AZURA"
+];
+
+/* ---------------------------
+  Storage key & util
+----------------------------*/
+const STORAGE_KEY = 'absensi_kelasX_v2';
+let dataStore = {}; // will hold monthKey -> [ per-student arrays ]
+
+function monthKey(y,m){ // y number, m 0-11
+  return `${y}-${String(m+1).padStart(2,'0')}`;
+}
+
+/* ---------------------------
+  Login
+----------------------------*/
+function doLogin(){
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  if(u === 'admin' && p === '123'){
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    alert('Username atau password salah! (default admin / 123)');
+  }
+}
+function logout(){
+  if(!confirm('Logout?')) return;
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginBox').style.display='block';
+}
+
+/* ---------------------------
+  Init UI: month/year selects, load storage
+----------------------------*/
+function initApp(){
+  // month selector
+  const monthSel = document.getElementById('monthSel');
+  const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  months.forEach((m,i)=>{ const o = document.createElement('option'); o.value=i; o.textContent=m; monthSel.appendChild(o); });
+
+  // year selector (range: current-2 .. current+1)
+  const yearSel = document.getElementById('yearSel');
+  const curY = new Date().getFullYear();
+  for(let y = curY-2; y<=curY+1; y++){ const o=document.createElement('option'); o.value=y; o.textContent=y; yearSel.appendChild(o); }
+
+  // default: current month/year
+  monthSel.value = new Date().getMonth();
+  yearSel.value = new Date().getFullYear();
+
+  monthSel.addEventListener('change', renderTable);
+  yearSel.addEventListener('change', renderTable);
+  document.getElementById('filterName').addEventListener('input', renderTable);
+
+  // load storage
+  loadStorage();
+  renderTable();
+  // auto save periodically
+  setInterval(() => {
+    saveAll(false);
+  }, 5000);
+}
+
+/* ---------------------------
+  Storage functions
+----------------------------*/
+function loadStorage(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{
+      dataStore = JSON.parse(raw);
+      updateSavedStatus();
+    }catch(e){
+      console.error('Load parse error', e);
+      dataStore = {};
+    }
+  } else dataStore = {};
+}
+function saveAll(showAlert=true){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataStore));
+    updateSavedStatus();
+    if(showAlert) alert('Data tersimpan.');
+  }catch(e){
+    alert('Gagal menyimpan: ' + e);
+  }
+}
+function updateSavedStatus(){
+  const el = document.getElementById('savedStatus');
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){ el.textContent = 'Terakhir disimpan: -'; return; }
+  const ts = new Date().toLocaleString();
+  el.textContent = 'Terakhir disimpan: ' + ts;
+}
+
+/* ---------------------------
+  Render table for selected month
+----------------------------*/
+function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+function ensureMonthData(key, days){
+  if(!dataStore[key]){
+    // create array for each student: index day-1 -> 'H' default
+    dataStore[key] = NAMES.map(()=> Array(days).fill('H'));
+  } else {
+    // if existing but days changed (e.g., Feb), adjust length
+    const arr = dataStore[key];
+    for(let i=0;i<arr.length;i++){
+      if(arr[i].length < days) arr[i] = arr[i].concat(Array(days - arr[i].length).fill('H'));
+      if(arr[i].length > days) arr[i] = arr[i].slice(0, days);
+    }
+  }
+}
+
+function renderTable(){
+  const m = Number(document.getElementById('monthSel').value);
+  const y = Number(document.getElementById('yearSel').value);
+  const days = daysInMonth(y,m);
+  const key = monthKey(y,m);
+  ensureMonthData(key, days);
+
+  const filter = document.getElementById('filterName').value.trim().toLowerCase();
+
+  // build table
+  const wrap = document.getElementById('tableWrap');
+  wrap.innerHTML = '';
+  const table = document.createElement('table');
+
+  // THEAD
+  const thead = document.createElement('thead');
+  const tr1 = document.createElement('tr');
+  tr1.innerHTML = `<th style="width:40px">No</th><th style="min-width:220px">Nama Siswa</th>`;
+  for(let d=1; d<=days; d++){
+    const th = document.createElement('th');
+    th.className = 'dayHeader';
+    th.title = `Tanggal ${d}`;
+    th.textContent = d;
+    tr1.appendChild(th);
+  }
+  tr1.innerHTML += `<th class="tot">Hadir</th><th class="tot">Sakit</th><th class="tot">Izin</th><th class="tot">Alfa</th>`;
+  thead.appendChild(tr1);
+  table.appendChild(thead);
+
+  // TBODY
+  const tbody = document.createElement('tbody');
+  const monthArr = dataStore[key];
+
+  NAMES.forEach((name, idx) => {
+    if(filter && !name.toLowerCase().includes(filter)) return;
+    const row = document.createElement('tr');
+    const noTd = document.createElement('td'); noTd.textContent = idx+1;
+    const nameTd = document.createElement('td'); nameTd.className='name'; nameTd.textContent = name;
+    row.appendChild(noTd); row.appendChild(nameTd);
+
+    // daily selects
+    for(let d=0; d<days; d++){
+      const td = document.createElement('td');
+      const sel = document.createElement('select');
+      sel.className = 'daily';
+      sel.dataset.sid = idx;
+      sel.dataset.day = d;
+      // options
+      ['H','S','I','A'].forEach(op => {
+        const o = document.createElement('option'); o.value = op; o.text = op; sel.appendChild(o);
+      });
+      sel.value = monthArr[idx][d] || 'H';
+      sel.addEventListener('change', onDailyChange);
+      td.appendChild(sel);
+      row.appendChild(td);
+    }
+
+    // totals placeholders
+    const tH = document.createElement('td'); tH.className='tot totalH'; tH.textContent = '0';
+    const tS = document.createElement('td'); tS.className='tot totalS'; tS.textContent = '0';
+    const tI = document.createElement('td'); tI.className='tot totalI'; tI.textContent = '0';
+    const tA = document.createElement('td'); tA.className='tot totalA'; tA.textContent = '0';
+    row.appendChild(tH); row.appendChild(tS); row.appendChild(tI); row.appendChild(tA);
+
+    tbody.appendChild(row);
+  });
+
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+
+  // after render compute totals
+  computeAllTotals();
+}
+
+/* ---------------------------
+  Event: daily change - update dataStore & totals
+----------------------------*/
+function onDailyChange(e){
+  const sel = e.target;
+  const sid = Number(sel.dataset.sid);
+  const day = Number(sel.dataset.day);
+  const m = Number(document.getElementById('monthSel').value);
+  const y = Number(document.getElementById('yearSel').value);
+  const key = monthKey(y,m);
+  if(!dataStore[key]) ensureMonthData(key, daysInMonth(y,m));
+  dataStore[key][sid][day] = sel.value;
+  computeTotalsForRow(sel.closest('tr'));
+  // save quickly (debounced by periodic save too)
+  saveAll(false);
+}
+
+/* ---------------------------
+  Compute totals
+----------------------------*/
+function computeTotalsForRow(row){
+  const selects = Array.from(row.querySelectorAll('select.daily'));
+  let cH=0,cS=0,cI=0,cA=0;
+  selects.forEach(s=>{ const v=s.value; if(v==='H') cH++; if(v==='S') cS++; if(v==='I') cI++; if(v==='A') cA++; });
+  row.querySelector('.totalH').textContent = cH;
+  row.querySelector('.totalS').textContent = cS;
+  row.querySelector('.totalI').textContent = cI;
+  row.querySelector('.totalA').textContent = cA;
+}
+
+function computeAllTotals(){
+  const rows = Array.from(document.querySelectorAll('#tableWrap tbody tr'));
+  rows.forEach(r => computeTotalsForRow(r));
+}
+
+/* ---------------------------
+  Helper: reset month or all
+----------------------------*/
+function resetMonth(){
+  if(!confirm('Hapus semua data untuk bulan ini?')) return;
+  const m = Number(document.getElementById('monthSel').value);
+  const y = Number(document.getElementById('yearSel').value);
+  const key = monthKey(y,m);
+  delete dataStore[key];
+  saveAll(false);
+  renderTable();
+  alert('Data bulan dihapus.');
+}
+function resetAll(){
+  if(!confirm('Hapus semua data (semua bulan)?')) return;
+  dataStore = {};
+  saveAll(false);
+  renderTable();
+  alert('Semua data dihapus.');
+}
+
+/* ---------------------------
+  Export CSV
+----------------------------*/
+function exportCSV(){
+  const m = Number(document.getElementById('monthSel').value);
+  const y = Number(document.getElementById('yearSel').value);
+  const days = daysInMonth(y,m);
+  const key = monthKey(y,m);
+  if(!dataStore[key]) { alert('Belum ada data untuk bulan ini'); return; }
+
+  const header = ['No','Nama', ...Array.from({length:days},(_,i)=>`T${i+1}`), 'Hadir','Sakit','Izin','Alfa'];
+  const rows = [header.join(',')];
+  dataStore[key].forEach((arr, idx) => {
+    const name = `"${NAMES[idx].replace(/"/g,'""')}"`;
+    const dayVals = arr.map(v => v || '');
+    const counts = {H:0,S:0,I:0,A:0};
+    dayVals.forEach(v => { if(counts[v]!==undefined) counts[v]++; });
+    rows.push([idx+1, name, ...dayVals, counts.H, counts.S, counts.I, counts.A].join(','));
+  });
+
+  const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `absensi_${key}.csv`; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+
+/* ---------------------------
+  Demo fill (optional)
+----------------------------*/
+function fillDemo(){
+  const m = Number(document.getElementById('monthSel').value) || new Date().getMonth();
+  const y = Number(document.getElementById('yearSel').value) || new Date().getFullYear();
+  const key = monthKey(y,m);
+  const days = daysInMonth(y,m);
+  ensureMonthData(key, days);
+  // random sample: a few S/I/A
+  for(let i=0;i<NAMES.length;i++){
+    for(let d=0; d<days; d++){
+      const r = Math.random();
+      if(r < 0.85) dataStore[key][i][d] = 'H';
+      else if(r < 0.88) dataStore[key][i][d] = 'S';
+      else if(r < 0.92) dataStore[key][i][d] = 'I';
+      else dataStore[key][i][d] = 'A';
+    }
+  }
+  saveAll(false);
+  renderTable();
+}
+
+/* ---------------------------
+  On page unload save
+----------------------------*/
+window.addEventListener('beforeunload', () => {
+  saveAll(false);
+});
+
+/* ---------------------------
+  Start automatically if already logged (optional)
+----------------------------*/
+(function autoStartIfData(){
+  // if you want to auto-enter app (e.g. for teacher machine), uncomment doLogin() and adjust creds.
+  // doLogin();
+})();
+</script>
+</body>
+</html>
